@@ -1,15 +1,17 @@
 import React, { Component } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, TextInput } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
 export default class ToDo extends Component {
     state = {
         isEditing: false,
-        isCompleted: false
+        isCompleted: false,
+        toDoValue:""
     };
     render() {
-        const { isCompleted, isEditing } = this.state;
+        const { isCompleted, isEditing, toDoValue } = this.state;
+        const { text } = this.props;
         return (
             <View style={styles.container}>
                 <View style={styles.column}>
@@ -21,26 +23,41 @@ export default class ToDo extends Component {
                             ]}
                         />
                     </TouchableOpacity>
-                    <Text
+                    {isEditing ? (
+                        <TextInput
+                            style={[
+                                styles.input, 
+                                styles.text,
+                                isCompleted ? styles.completedText : styles.uncompletedText
+                            ]}
+                            value={toDoValue}
+                            multiline={true}
+                            onChangeText={this._controllInput}
+                            returnKeyType={"done"}
+                            onBlur={this._finishEditing}
+                        />
+                    ) : (
+                            <Text
                         style={[
                             styles.text,
                             isCompleted ? styles.completedText : styles.uncompletedText
                         ]}
                     >
-                        은행 들리기
-                </Text>
+                        {text}
+                    </Text>
+                    )}
                 </View>
                 
                     {isEditing ? (<View style={styles.actions}>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPressOut={this._finishEditing}>
                             <View style={styles.actionContainer}>
-                                <Text style={styles.actionText}>ㅇ</Text>
+                                <Text style={styles.actionText}>◎</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
                     ) : (
                     <View style={styles.actions}>
-                            <TouchableOpacity>
+                            <TouchableOpacity onPressOut={this._startEditing}>
                                 <View style={styles.actionContainer}>
                                     <Text style={styles.actionText}>★</Text>
                                 </View>
@@ -63,9 +80,16 @@ export default class ToDo extends Component {
         });
     };
     _startEditing = () => {
+        const { text } = this.props;
+        this.setState({isEditing: true, toDoValue: text});
+    };
+    _finishEditing = () => {
         this.setState({
-            isEditing: true
-        })
+            isEditing: false
+        });
+    };
+    _controllInput = text => {
+        this.setState({ toDoValue : text });
     }
 }
 
@@ -106,7 +130,7 @@ const styles = StyleSheet.create({
     column: {
         flexDirection: "row",
         alignItems: "center",
-        width: width / 3,
+        width: width / 2,
         justifyContent: "space-between"
     },
     actions: {
@@ -115,5 +139,10 @@ const styles = StyleSheet.create({
     actionContainer:{
         marginVertical: 10,
         marginHorizontal: 10
+    },
+    input: {
+        width: width / 2,
+        marginVertical: 15,
+        paddingBottom: 5
     }
 });
