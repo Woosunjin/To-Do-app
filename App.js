@@ -2,20 +2,23 @@ import React from "react";
 import { StyleSheet, Text, View, StatusBar, TextInput, Dimensions, Platform, ScrollView } from "react-native";
 import { AppLoading } from "expo";
 import ToDo from "./ToDo";
+import uuidv1 from "uuid/v1";
 
 const { height, width } = Dimensions.get("window");
 
 export default class App extends React.Component {
   state = {
     newToDo: "",
-    loadedtoDos: false
+    loadedtoDos: false,
+    toDos: {}
   };
   componentDidMount= () => {
     this._loadToDos();
   }
 
   render() {
-    const { newToDo, loadedtoDos } = this.state;
+    const { newToDo, loadedtoDos, toDos } = this.state;
+    console.log(toDos);
     if(!loadedtoDos) {
       return <AppLoading/>;
     }
@@ -32,9 +35,10 @@ export default class App extends React.Component {
             placeholderTextColor={"#999"}
             returnKeyType={"done"}
             autoCorrect={false}
+            onSubmitEditing={this._addToDo}
           />
           <ScrollView contentContainerStyle={styles.toDos}>
-            <ToDo text={"hello awesome to do~~"}/>
+            {Object.values(toDos).map(toDo => <ToDo key={toDo.id} {...toDo} deleteToDo={this._deleteToDo}/>)}
           </ScrollView>
         </View>
       </View>
@@ -50,6 +54,69 @@ export default class App extends React.Component {
       loadedtoDos: true
     });
   };
+  _addToDo = () => {
+    const { newToDo } = this.setState;
+    if(newToDo !== ""){
+      this.setState(prevState => {
+        const ID = uuidv1();
+        const newToDoObject = {
+          [ID]: {
+            id: ID,
+            isCompleted: false,
+            text: newToDo,
+            createdAt: Date.now()
+          }
+        };
+        const newState = {
+          ...prevState,
+          newToDo: "",
+          toDos: {
+            ...prevState.toDos,
+            ...newToDoObject
+          }
+        }
+        return { ...newState };
+      });
+    }
+  };
+  _deleteToDo = (id) => {
+    this.setState(prevState => {
+      const toDos = prevState.toDos;
+      delete toDos[id];
+      const newState = {
+        ...prevState,
+        ...toDos
+      };
+      return { ...newState };
+    });
+  };
+  _uncompleteToDo = (id) => {
+    this.setState(prevState => {
+      const newState = {
+        ...prevState,
+        toDos: {
+          ...prevState.toDos,
+          [id]: {
+            ...prevState.toDos[id],
+            isCompleted: false
+          }
+        }
+      }
+      return { ...newState };
+    });
+  };
+  _completeToDo = (id) => {
+    this.setState(prevState => {
+      const newState = {
+        ...prevState,
+        toDos: {
+          ...prevState.toDos,
+          [id]: { ...prevState.toDos[id], isCompleted:true }
+        }
+      };
+      return {  ...newState };
+    })
+  }
 }
 
 const styles = StyleSheet.create({
